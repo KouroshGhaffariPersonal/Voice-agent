@@ -5,10 +5,11 @@ document
     const textInput = document.getElementById("text-input").value;
 
     try {
+      // Save agent instructions and get link
       const response = await fetch(
-        "https://voice-feedback-api-7329c580eca3.herokuapp.com/session",
+        "https://voice-feedback-api-7329c580eca3.herokuapp.com/create-agent",
         {
-          method: "POST", // Changed to POST to send data
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
@@ -17,44 +18,24 @@ document
           }),
         }
       );
-      console.log(textInput);
 
-      const data = await response.json();
-      const EPHEMERAL_KEY = data.client_secret.value;
+      const { data } = await response.json();
+      const id = data.id; // or data._id depending on your response
+      console.log(id);
 
-      const pc = new RTCPeerConnection();
+      // Create and display the shareable link
+      const shareableLink = `http://127.0.0.1:5500/agent.html?id=${id}`;
 
-      const audioEl = document.createElement("audio");
-      audioEl.autoplay = true;
-      pc.ontrack = (e) => (audioEl.srcObject = e.streams[0]);
+      // Create a div to show the link
+      const linkContainer = document.createElement("div");
+      linkContainer.innerHTML = `
+        <p>Share this link with your users:</p>
+        <input type="text" value="${shareableLink}" readonly style="width: 100%; padding: 8px;" />
+        <button onclick="navigator.clipboard.writeText('${shareableLink}')">Copy Link</button>
+      `;
 
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      pc.addTrack(ms.getTracks()[0]);
-
-      const dc = pc.createDataChannel("oai-events");
-      dc.addEventListener("message", (e) => {
-        console.log(e);
-      });
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-mini-realtime-preview-2024-12-17";
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${EPHEMERAL_KEY}`,
-          "Content-Type": "application/sdp",
-        },
-      });
-
-      const answer = {
-        type: "answer",
-        sdp: await sdpResponse.text(),
-      };
-      await pc.setRemoteDescription(answer);
+      // Add it after the form
+      document.getElementById("voice-agent-form").after(linkContainer);
     } catch (error) {
       console.error("Error:", error);
     }
