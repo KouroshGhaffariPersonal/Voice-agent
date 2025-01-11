@@ -8,12 +8,16 @@ document
       const response = await fetch(
         "https://voice-feedback-api-7329c580eca3.herokuapp.com/session",
         {
-          method: "GET",
+          method: "POST", // Changed to POST to send data
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            instructions: textInput,
+          }),
         }
       );
+      console.log(textInput);
 
       const data = await response.json();
       const EPHEMERAL_KEY = data.client_secret.value;
