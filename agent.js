@@ -78,34 +78,69 @@ async function initializeAgent() {
 
         // Set up data channel for events
         dc.onopen = () => {
-          // Send initial instructions once connected
+          // Send initial configuration
           dc.send(
             JSON.stringify({
-              type: "config",
-              data: {
-                metadata: {
-                  speaker: "assistant",
-                  system_message: agent.data.instructions,
+              type: "session.update",
+              session: {
+                input_audio_transcription: {
+                  model: "whisper-1",
                 },
               },
             })
           );
+
+          // dc.send(
+          //   JSON.stringify({
+          //     type: "conversation.item.create",
+          //     item: {
+          //       id: "msg_001",
+          //       type: "message",
+          //       role: "user",
+          //       content: [
+          //         {
+          //           type: "input_text",
+          //           text: "Hello, how are you?",
+          //         },
+          //       ],
+          //     },
+          //   })
+          // );
+
+          // // Send session update to enable transcription
+          // dc.send(
+          //   JSON.stringify({
+          //     type: "session.update",
+          //     data: {
+          //       input_audio_transcription: {
+          //         model: "whisper-1",
+          //         enable_realtime_transcription: true,
+          //       },
+          //     },
+          //   })
+          // );
         };
 
         dc.addEventListener("message", (e) => {
           try {
-            // Parse the message data
             const messageData = JSON.parse(e.data);
+            console.log("Message type:", messageData); // Debug log
 
-            // Check if it's a transcript delta
-            if (messageData.type === "response.audio_transcript.delta") {
-              // Add the new text to the transcript
-              updateTranscript(messageData.delta);
+            // Check for session events
+            if (messageData.type === "session.created") {
+              console.log("Session created with config:", messageData.config);
+            } else if (messageData.type === "session.updated") {
+              console.log("Session updated with config:", messageData.config);
             }
-
-            console.log("Message received:", messageData);
+            // Check for different types of transcripts
+            else if (messageData.type === "response.audio_transcript.delta") {
+              updateTranscript(messageData.delta, "assistant");
+            } else if (messageData.type === "input.audio_transcript.delta") {
+              updateTranscript(messageData.delta, "user");
+            }
           } catch (error) {
-            console.log("Non-JSON message received:", e);
+            console.log("Raw message:", e.data);
+            console.error("Error parsing message:", error);
           }
         });
 
@@ -159,11 +194,22 @@ async function initializeAgent() {
 }
 
 // Function to update the transcript
-function updateTranscript(newText) {
+function updateTranscript(newText, speaker) {
   if (!transcriptDiv) return;
 
+  // Create or get the current paragraph for this speaker
+  let currentParagraph = transcriptDiv.lastElementChild;
+  if (!currentParagraph || currentParagraph.dataset.speaker !== speaker) {
+    currentParagraph = document.createElement("p");
+    currentParagraph.dataset.speaker = speaker;
+    currentParagraph.style.marginBottom = "10px";
+    currentParagraph.style.color =
+      speaker === "assistant" ? "#2c5282" : "#2d3748";
+    transcriptDiv.appendChild(currentParagraph);
+  }
+
   // Append the new text
-  transcriptDiv.textContent += newText;
+  currentParagraph.textContent += newText;
 
   // Auto-scroll to bottom
   transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
