@@ -1,6 +1,7 @@
 // Make pc accessible in wider scope
 let pc = null;
 let transcriptDiv = null;
+let currentMessage = null;
 
 async function initializeAgent() {
   // Get reference to existing transcript div
@@ -38,6 +39,11 @@ async function initializeAgent() {
   document
     .getElementById("start-session")
     .addEventListener("click", async () => {
+      // Clear previous transcript when starting new conversation
+      if (transcriptDiv) {
+        transcriptDiv.textContent = "";
+      }
+
       try {
         const startButton = document.getElementById("start-session");
         const endButton = document.getElementById("end-session");
@@ -77,7 +83,53 @@ async function initializeAgent() {
 
         const audioEl = document.createElement("audio");
         audioEl.autoplay = true;
-        pc.ontrack = (e) => (audioEl.srcObject = e.streams[0]);
+
+        // Add audio analysis to detect speaking
+        let audioContext;
+        let audioSource;
+        let analyser;
+        const voiceIndicator = document.querySelector(".inner-circle");
+
+        pc.ontrack = (e) => {
+          audioEl.srcObject = e.streams[0];
+
+          // Set up audio analysis
+          if (!audioContext) {
+            console.log("Setting up audio analysis...");
+            audioContext = new AudioContext();
+            audioSource = audioContext.createMediaStreamSource(e.streams[0]);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            audioSource.connect(analyser);
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            function updateVoiceIndicator() {
+              analyser.getByteFrequencyData(dataArray);
+
+              // Calculate average volume
+              const average =
+                dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+              const minScale = 1;
+              const maxScale = 1.5;
+              const scale = minScale + (average / 255) * (maxScale - minScale);
+
+              // Apply transform to the voice-indicator instead of inner-circle
+              const voiceIndicator = document.querySelector(".voice-indicator");
+              if (!voiceIndicator) {
+                console.error("Voice indicator element not found!");
+                return;
+              }
+
+              voiceIndicator.style.transform = `scale(${scale})`;
+              requestAnimationFrame(updateVoiceIndicator);
+            }
+
+            console.log("Starting animation loop...");
+            updateVoiceIndicator();
+          }
+        };
 
         const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
         pc.addTrack(ms.getTracks()[0]);
@@ -105,25 +157,37 @@ async function initializeAgent() {
             console.log("Message type:", messageData); // Debug log
 
             if (messageData.type === "session.created") {
-              // dc.send(
-              //   JSON.stringify({
-              //     type: "conversation.item.create",
-              //     item: {
-              //       type: "message",
-              //       role: "user",
-              //       content: [
-              //         {
-              //           type: "input_text",
-              //           text: "Hello, how are you?",
-              //         },
-              //       ],
-              //     },
-              //   })
-              // );
+              // Get all relevant elements
+              const spinner = document.getElementById("loading-spinner");
+              const endButton = document.getElementById("end-session");
+              const voiceIndicatorContainer = document.querySelector(
+                ".voice-indicator-container"
+              );
 
-              // Hide spinner and show end button
-              spinner.style.display = "none";
-              endButton.style.display = "block";
+              // Fade out spinner
+              spinner.style.opacity = "0";
+              spinner.style.transition = "opacity 0.3s ease";
+
+              // After spinner fades out completely (300ms), handle the transition
+              setTimeout(() => {
+                spinner.style.display = "none";
+
+                // Show and animate voice indicator
+                voiceIndicatorContainer.style.display = "flex";
+
+                // Small delay to ensure display: flex has taken effect
+                setTimeout(() => {
+                  voiceIndicatorContainer.classList.add("voice-indicator-show");
+                  // Show end button at the same time as voice indicator animation
+                  endButton.style.display = "block";
+                  endButton.style.opacity = "0";
+                  // Fade in the end button
+                  setTimeout(() => {
+                    endButton.style.opacity = "1";
+                    endButton.style.transition = "opacity 0.3s ease";
+                  }, 50);
+                }, 50);
+              }, 300);
 
               dc.send(
                 JSON.stringify({
@@ -142,8 +206,9 @@ async function initializeAgent() {
             // Check for different types of transcripts
             else if (messageData.type === "response.audio_transcript.delta") {
               updateTranscript(messageData.delta, "assistant");
-            } else if (messageData.type === "input.audio_transcript.delta") {
-              updateTranscript(messageData.delta, "user");
+            } else if (messageData.type === "response.audio_transcript.done") {
+              // Mark the current message as complete
+              currentMessage = null;
             }
           } catch (error) {
             console.log("Raw message:", e.data);
@@ -184,13 +249,18 @@ async function initializeAgent() {
             pc.close();
             pc = null;
           }
-          endButton.style.display = "none";
-          document.getElementById("start-session").style.display = "block";
 
-          // Clear the transcript
-          if (transcriptDiv) {
-            transcriptDiv.textContent = "";
-          }
+          const endButton = document.getElementById("end-session");
+          const voiceIndicatorContainer = document.querySelector(
+            ".voice-indicator-container"
+          );
+
+          // Hide voice indicator and end button
+          voiceIndicatorContainer.classList.remove("voice-indicator-show");
+          voiceIndicatorContainer.style.display = "none";
+          endButton.style.display = "none";
+
+          document.getElementById("start-session").style.display = "block";
         });
 
         // Error handling for the connection
@@ -211,25 +281,54 @@ async function initializeAgent() {
 }
 
 // Function to update the transcript
-function updateTranscript(newText, speaker) {
-  if (!transcriptDiv) return;
-
-  // Create or get the current paragraph for this speaker
-  let currentParagraph = transcriptDiv.lastElementChild;
-  if (!currentParagraph || currentParagraph.dataset.speaker !== speaker) {
-    currentParagraph = document.createElement("p");
-    currentParagraph.dataset.speaker = speaker;
-    currentParagraph.style.marginBottom = "10px";
-    currentParagraph.style.color =
-      speaker === "assistant" ? "#2c5282" : "#2d3748";
-    transcriptDiv.appendChild(currentParagraph);
+function updateTranscript(newText, speaker, isDone = false) {
+  if (!transcriptDiv) {
+    console.error("Transcript div not found");
+    return;
   }
 
-  // Append the new text
-  currentParagraph.textContent += newText;
+  // Create new message bubble if we don't have one or if previous message is done
+  if (!currentMessage || isDone) {
+    // Mark previous messages as older
+    const existingMessages = transcriptDiv.querySelectorAll(".message-bubble");
+    existingMessages.forEach((msg) => {
+      msg.classList.add("older");
+    });
 
-  // Auto-scroll to bottom
-  transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+    const template = document.getElementById("assistant-message");
+    if (!template) {
+      console.error("Assistant message template not found");
+      return;
+    }
+
+    currentMessage = template.content
+      .cloneNode(true)
+      .querySelector(".message-bubble");
+    currentMessage.classList.add("new");
+
+    transcriptDiv.appendChild(currentMessage);
+
+    // Force a reflow to ensure the animation triggers
+    void currentMessage.offsetWidth;
+
+    // Scroll with offset for padding
+    transcriptDiv.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  // Get the paragraph element inside the current message bubble
+  const messageParagraph = currentMessage.querySelector(".transcript-message");
+  messageParagraph.textContent += newText;
+
+  // Ensure scroll position is maintained during updates
+  requestAnimationFrame(() => {
+    transcriptDiv.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  });
 }
 
 // Initialize when page loads

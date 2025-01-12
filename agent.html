@@ -9,17 +9,30 @@
   </head>
   <body>
     <h1 class="hidden">Voice Feedback Agent</h1>
-    <div class="container">
+    <container class="container">
       <div>
         <div class="button-container">
-          <button id="start-session" class="hidden">Start Session</button>
+          <button id="start-session" class="hidden">Start Conversation</button>
           <button id="end-session" style="display: none">
             End Conversation
           </button>
           <div class="spinner" id="loading-spinner"></div>
         </div>
       </div>
+    </container>
+
+    <div class="voice-indicator-container">
+      <div class="voice-indicator">
+        <div class="inner-circle"></div>
+      </div>
     </div>
+
+    <template id="assistant-message">
+      <div class="message-bubble assistant-message">
+        <p class="transcript-message"></p>
+      </div>
+    </template>
+
     <div id="transcript" class="transcript"></div>
 
     <script src="agent.js"></script>
