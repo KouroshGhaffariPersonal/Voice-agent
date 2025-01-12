@@ -12,14 +12,13 @@
     <div class="container">
       <div>
         <button id="start-session" class="hidden">Start Session</button>
-        <button id="end-session" disabled>End Conversation</button>
+        <button id="end-session" style="display: none">End Conversation</button>
+        <div id="transcript" class="transcript">
+          <!-- Transcript content will be updated dynamically -->
+        </div>
       </div>
 
-      <div id="conversation-display" class="conversation-display">
-        <h3>Conversation</h3>
-        <div id="messages"></div>
-      </div>
-    </div>
+      
     <script src="agent.js"></script>
   </body>
 </html>

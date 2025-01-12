@@ -3,6 +3,9 @@ let pc = null;
 let transcriptDiv = null;
 
 async function initializeAgent() {
+  // Get reference to existing transcript div
+  transcriptDiv = document.getElementById("transcript");
+
   // Animate title and button sequentially
   const title = document.querySelector("h1");
   const startButton = document.getElementById("start-session");
@@ -19,7 +22,7 @@ async function initializeAgent() {
   // Animate button 1 second after title animation
   setTimeout(() => {
     startButton.classList.add("animate-button");
-  }, 1900); // 800ms for title animation + 100ms buffer + 1000ms delay
+  }, 1900);
 
   // Get agent ID from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -31,31 +34,14 @@ async function initializeAgent() {
     return;
   }
 
-  // Create transcript div at the start
-  transcriptDiv = document.createElement("div");
-  transcriptDiv.id = "transcript";
-  transcriptDiv.style.cssText = `
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    min-height: 100px;
-    max-height: 300px;
-    overflow-y: auto;
-  `;
-  document.getElementById("start-session").after(transcriptDiv);
-
   // Add click handler for start button
   document
     .getElementById("start-session")
     .addEventListener("click", async () => {
       try {
-        // Create end conversation button
-        const endButton = document.createElement("button");
-        endButton.id = "end-session";
-        endButton.textContent = "End Conversation";
-        endButton.style.display = "none"; // Hide initially
-        document.getElementById("start-session").after(endButton);
+        // Show end button (already exists in HTML)
+        const endButton = document.getElementById("end-session");
+        endButton.style.display = "block";
 
         // First fetch the agent's instructions
         const agentResponse = await fetch(
@@ -114,6 +100,33 @@ async function initializeAgent() {
             const messageData = JSON.parse(e.data);
             console.log("Message type:", messageData); // Debug log
 
+            if (messageData.type === "session.created") {
+              // dc.send(
+              //   JSON.stringify({
+              //     type: "conversation.item.create",
+              //     item: {
+              //       type: "message",
+              //       role: "user",
+              //       content: [
+              //         {
+              //           type: "input_text",
+              //           text: "Hello, how are you?",
+              //         },
+              //       ],
+              //     },
+              //   })
+              // );
+
+              dc.send(
+                JSON.stringify({
+                  type: "response.create",
+                  response: {
+                    instructions: `Say hello and introduce yourself. Then start talking about the instructions you were given. These are your instructions ${agent.data.instructions}. Always respond in a conversational manner. Always keep your responses concise and to the point.`,
+                  },
+                })
+              );
+            }
+
             // Check for session.created event
             if (messageData.type === "session.created") {
               console.log("Session created with config:", messageData.config);
@@ -150,7 +163,7 @@ async function initializeAgent() {
         };
         await pc.setRemoteDescription(answer);
 
-        // Show end button once connection is established
+        // Update end button display logic
         pc.onconnectionstatechange = () => {
           if (pc.connectionState === "connected") {
             endButton.style.display = "block";
