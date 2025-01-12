@@ -7,18 +7,35 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <main>
-      <h1>Create your own User Researcher</h1>
+    <h1>Create your own Voice Agent</h1>
+    <h3>
+      Design an AI voice agent by describing its role and purpose. Your agent
+      will come to life, ready to engage in meaningful conversations.
+    </h3>
+    <main class="border">
       <form id="voice-agent-form">
-        <label for="text-input">Tell your User Researcher what to do</label>
+        <label for="text-input">Describe your voice agent's purpose</label>
         <textarea
+          class="border"
           id="text-input"
           name="text-input"
-          placeholder="Enter your text here"
+          placeholder="E.g., You're a user researcher conducting interviews about our B2B SaaS product. Ask relevant questions to understand user needs and pain points...
+          "
           required
         ></textarea>
-        <button type="submit">Submit</button>
+        <p>
+          Be specific about the role, goals, and conversation style you want
+          your agent to have
+        </p>
+        <button type="submit">Create Voice Agent</button>
       </form>
+      <div id="link-container">
+        <p>Share this link with your users:</p>
+        <div class="link-wrapper">
+          <input id="shareable-link" class="border" type="text" readonly />
+          <button onclick="copyLink()">Copy Link</button>
+        </div>
+      </div>
     </main>
     <script src="index.js"></script>
   </body>

@@ -3,6 +3,24 @@ let pc = null;
 let transcriptDiv = null;
 
 async function initializeAgent() {
+  // Animate title and button sequentially
+  const title = document.querySelector("h1");
+  const startButton = document.getElementById("start-session");
+
+  // Set initial styles
+  title.style.opacity = "0";
+  startButton.style.opacity = "0";
+
+  // Animate title first
+  setTimeout(() => {
+    title.classList.add("animate-title");
+  }, 100);
+
+  // Animate button 1 second after title animation
+  setTimeout(() => {
+    startButton.classList.add("animate-button");
+  }, 1900); // 800ms for title animation + 100ms buffer + 1000ms delay
+
   // Get agent ID from URL
   const urlParams = new URLSearchParams(window.location.search);
   const agentId = urlParams.get("id");
@@ -89,36 +107,6 @@ async function initializeAgent() {
               },
             })
           );
-
-          // dc.send(
-          //   JSON.stringify({
-          //     type: "conversation.item.create",
-          //     item: {
-          //       id: "msg_001",
-          //       type: "message",
-          //       role: "user",
-          //       content: [
-          //         {
-          //           type: "input_text",
-          //           text: "Hello, how are you?",
-          //         },
-          //       ],
-          //     },
-          //   })
-          // );
-
-          // // Send session update to enable transcription
-          // dc.send(
-          //   JSON.stringify({
-          //     type: "session.update",
-          //     data: {
-          //       input_audio_transcription: {
-          //         model: "whisper-1",
-          //         enable_realtime_transcription: true,
-          //       },
-          //     },
-          //   })
-          // );
         };
 
         dc.addEventListener("message", (e) => {
@@ -126,11 +114,9 @@ async function initializeAgent() {
             const messageData = JSON.parse(e.data);
             console.log("Message type:", messageData); // Debug log
 
-            // Check for session events
+            // Check for session.created event
             if (messageData.type === "session.created") {
               console.log("Session created with config:", messageData.config);
-            } else if (messageData.type === "session.updated") {
-              console.log("Session updated with config:", messageData.config);
             }
             // Check for different types of transcripts
             else if (messageData.type === "response.audio_transcript.delta") {

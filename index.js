@@ -23,20 +23,31 @@ document
       const id = data.id; // or data._id depending on your response
       console.log(id);
 
-      // Create and display the shareable link
+      // Update and show the link container
       const shareableLink = `http://127.0.0.1:5500/agent.html?id=${id}`;
-
-      // Create a div to show the link
-      const linkContainer = document.createElement("div");
-      linkContainer.innerHTML = `
-        <p>Share this link with your users:</p>
-        <input type="text" value="${shareableLink}" readonly style="width: 100%; padding: 8px;" />
-        <button onclick="navigator.clipboard.writeText('${shareableLink}')">Copy Link</button>
-      `;
-
-      // Add it after the form
-      document.getElementById("voice-agent-form").after(linkContainer);
+      document.getElementById("shareable-link").value = shareableLink;
+      document.getElementById("link-container").style.display = "block";
     } catch (error) {
       console.error("Error:", error);
     }
   });
+
+// Add copy function
+function copyLink() {
+  const linkInput = document.getElementById("shareable-link");
+  const copyButton = document.querySelector("#link-container button");
+
+  navigator.clipboard
+    .writeText(linkInput.value)
+    .then(() => {
+      copyButton.textContent = "Link copied";
+
+      // Optional: Reset button text after 2 seconds
+      setTimeout(() => {
+        copyButton.textContent = "Copy Link";
+      }, 2000);
+    })
+    .catch((err) => {
+      console.error("Failed to copy:", err);
+    });
+}

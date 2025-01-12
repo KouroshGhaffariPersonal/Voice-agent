@@ -4,64 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="agent.css" />
     <title>Welcome to Voice Feedback V1 by Kourosh Ghaffari</title>
-    <style>
-      .container {
-        display: flex;
-        gap: 2rem;
-      }
-
-      .conversation-display {
-        flex: 1;
-        padding: 20px;
-        border-left: 1px solid #ccc;
-        max-height: 80vh;
-        overflow-y: auto;
-      }
-
-      #messages {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .message {
-        padding: 10px;
-        border-radius: 8px;
-        max-width: 80%;
-      }
-
-      .assistant {
-        background-color: #f0f0f0;
-        align-self: flex-start;
-      }
-
-      .user {
-        background-color: #e3f2fd;
-        align-self: flex-end;
-      }
-
-      #end-session {
-        margin-left: 10px;
-        background-color: #ff4444;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      #end-session:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-      }
-    </style>
   </head>
   <body>
-    <h1>Voice Feedback Agent</h1>
+    <h1 class="hidden">Voice Feedback Agent</h1>
     <div class="container">
       <div>
-        <button id="start-session">Start Session</button>
+        <button id="start-session" class="hidden">Start Session</button>
         <button id="end-session" disabled>End Conversation</button>
       </div>
 
