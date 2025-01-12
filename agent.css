@@ -92,3 +92,34 @@
   max-height: 300px;
   overflow-y: auto;
 }
+
+/* Loading Spinner */
+.spinner {
+  display: none;
+  width: 40px;
+  height: 40px;
+  margin: 20px auto;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #18181b;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Button transition styles */
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px; /* Height of buttons */
+}
+
+#start-session,
+#end-session {
+  transition: opacity 0.3s ease;
+}

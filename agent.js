@@ -39,9 +39,13 @@ async function initializeAgent() {
     .getElementById("start-session")
     .addEventListener("click", async () => {
       try {
-        // Show end button (already exists in HTML)
+        const startButton = document.getElementById("start-session");
         const endButton = document.getElementById("end-session");
-        endButton.style.display = "block";
+        const spinner = document.getElementById("loading-spinner");
+
+        // Hide start button and show spinner
+        startButton.style.display = "none";
+        spinner.style.display = "block";
 
         // First fetch the agent's instructions
         const agentResponse = await fetch(
@@ -117,6 +121,10 @@ async function initializeAgent() {
               //   })
               // );
 
+              // Hide spinner and show end button
+              spinner.style.display = "none";
+              endButton.style.display = "block";
+
               dc.send(
                 JSON.stringify({
                   type: "response.create",
@@ -184,7 +192,17 @@ async function initializeAgent() {
             transcriptDiv.textContent = "";
           }
         });
+
+        // Error handling for the connection
+        pc.onicecandidateerror = () => {
+          spinner.style.display = "none";
+          startButton.style.display = "block";
+          alert("Failed to establish connection. Please try again.");
+        };
       } catch (error) {
+        // Show start button and hide spinner on error
+        document.getElementById("loading-spinner").style.display = "none";
+        document.getElementById("start-session").style.display = "block";
         console.error("Error:", error);
         document.body.innerHTML =
           "<h1>Error: Could not start conversation</h1>";
