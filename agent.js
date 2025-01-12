@@ -2,6 +2,7 @@
 let pc = null;
 let transcriptDiv = null;
 let currentMessage = null;
+let currentConversationId = null;
 
 async function initializeAgent() {
   // Get reference to existing transcript div
@@ -60,6 +61,22 @@ async function initializeAgent() {
         const agent = await agentResponse.json();
 
         console.log("Agent data:", agent); // Debug log
+
+        // Create new conversation
+        const conversationResponse = await fetch(
+          "https://voice-feedback-api-7329c580eca3.herokuapp.com/conversation",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              agentId: agentId,
+            }),
+          }
+        );
+        const conversationData = await conversationResponse.json();
+        currentConversationId = conversationData.data.conversationId;
 
         // Get session token with the stored instructions
         const sessionResponse = await fetch(
@@ -151,10 +168,48 @@ async function initializeAgent() {
           );
         };
 
-        dc.addEventListener("message", (e) => {
+        dc.addEventListener("message", async (e) => {
           try {
             const messageData = JSON.parse(e.data);
-            console.log("Message type:", messageData); // Debug log
+
+            // Store agent messages
+            if (messageData.type === "response.audio_transcript.done") {
+              await fetch(
+                `https://voice-feedback-api-7329c580eca3.herokuapp.com/conversation/${currentConversationId}/message`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    content: messageData.transcript,
+                    speaker: "agent",
+                  }),
+                }
+              );
+            }
+
+            // Store user messages
+            if (
+              messageData.type ===
+              "conversation.item.input_audio_transcription.completed"
+            ) {
+              await fetch(
+                `https://voice-feedback-api-7329c580eca3.herokuapp.com/conversation/${currentConversationId}/message`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    content: messageData.transcript,
+                    speaker: "user",
+                  }),
+                }
+              );
+            }
+
+            console.table("Message type:", messageData); // Debug log
 
             if (messageData.type === "session.created") {
               // Get all relevant elements
