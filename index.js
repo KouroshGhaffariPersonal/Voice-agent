@@ -24,7 +24,7 @@ document
       console.log(id);
 
       // Update and show the link container
-      const shareableLink = `http://127.0.0.1:5500/agent.html?id=${id}`;
+      const shareableLink = `https://voicegent.tiiny.site/agent.html?id=${id}`;
       document.getElementById("shareable-link").value = shareableLink;
       document.getElementById("link-container").style.display = "block";
     } catch (error) {

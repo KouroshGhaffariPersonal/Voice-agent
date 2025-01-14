@@ -1,3 +1,14 @@
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+  --large-desktop: 1200px;
+}
+
+html {
+  font-size: 62.5%;
+}
+
 body {
   margin: 0;
   padding: 20px;
@@ -9,6 +20,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 100vh;
+  width: 100vw;
   gap: 20px;
   background: linear-gradient(
     10deg,
@@ -31,7 +43,7 @@ p {
 
 /* TYPOGRAPHY  */
 h1 {
-  font-size: 48px;
+  font-size: 2.8rem;
   font-weight: 700;
   color: #111827;
 }
@@ -39,15 +51,15 @@ h1 {
 h3 {
   color: #4b5563;
   font-weight: 500;
-  font-size: 18px;
+  font-size: 1.8rem;
   line-height: 1.5;
-  max-width: 580px;
+  max-width: 58rem;
   text-align: center;
 }
 
 p {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 1.4rem;
   font-weight: 400;
 }
 
@@ -57,6 +69,7 @@ label {
   color: #374151;
 }
 
+/* MAIN ELEMENTS  */
 main {
   padding: 20px 24px;
   border-radius: 8px;
